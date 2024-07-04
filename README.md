@@ -6,6 +6,4 @@ This is the repository that contains simple example of using OpenGL in Android. 
 - Rendering the virtual object on the screen
 - Simple controller of scaling, rotation and translation
 
-<img src="./resources/demo.png", height="100x", width="300px">
-
-<!-- ![demo](./resources/demo.png) -->
+<img src="./resources/demo.png" width="200" height="400"/>
