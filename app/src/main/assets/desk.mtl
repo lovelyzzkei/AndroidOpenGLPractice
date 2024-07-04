@@ -1,0 +1,23 @@
+# Blender 4.1.1 MTL File: 'untitled.blend'
+# www.blender.org
+
+newmtl Desk_wood.001
+Ka 1.000000 1.000000 1.000000
+Ks 0.060000 0.060000 0.060000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:/Users/user/blenderkit_data/models/desk_4b08d5c6-6bb8-445c-bc27-a38b2814594d/textures_1k/desk-wood-diffuse.jpg
+map_Ns C:/Users/user/blenderkit_data/models/desk_4b08d5c6-6bb8-445c-bc27-a38b2814594d/textures_1k/desk-wood-roughness.jpg
+map_Bump -bm 0.750000 C:/Users/user/blenderkit_data/models/desk_4b08d5c6-6bb8-445c-bc27-a38b2814594d/textures_1k/desk-wood-normal.jpg
+
+newmtl Metal_Black_Dixon.001
+Ns 232.148773
+Ka 1.000000 1.000000 1.000000
+Kd 0.046543 0.046543 0.046543
+Ks 0.604545 0.604545 0.604545
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
