@@ -1,8 +1,11 @@
 package com.example.openglpractice;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
@@ -26,6 +29,7 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
     private int positionAttribute;
     private int normalAttribute;
     private int mvpMatrixUniform;
+    private int texturePositionHandle, textureUniformHandle;
 
     private final float[] projectionMatrix = new float[16];
     private final float[] viewMatrix = new float[16];
@@ -40,6 +44,7 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
 
     private FloatBuffer vertexBuffer;
     private FloatBuffer normalBuffer;
+    private FloatBuffer textureBuffer;
 
     // Properties of object
     private float rotationAngle = 0f;
@@ -48,7 +53,12 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
     private int screenWidth, screenHeight;
     private float aspectRatio;
 
+    // Properties of camera
+    private float[] cameraPosition = new float[3];
+    private float[] cameraRotation = new float[3];
+
     private GLSurfaceView glSurfaceView;
+    private int textureId;
 
     public ObjRenderer(Context context, GLSurfaceView glSurfaceView) {
         this.context = context;
@@ -59,6 +69,18 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);    // Transparent
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+
+        // Create Texture and bind
+        int[] textures = new int[1];
+        GLES20.glGenTextures(1, textures, 0);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        textureId = textures[0];
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.wood_color);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
 
         // Load and compile shaders
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, readShaderFromAssets("vertex_shader.glsl"));
@@ -74,6 +96,8 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         positionAttribute = GLES20.glGetAttribLocation(programId, "aPosition");
         normalAttribute = GLES20.glGetAttribLocation(programId, "aNormal");
         mvpMatrixUniform = GLES20.glGetUniformLocation(programId, "uMVPMatrix");
+        texturePositionHandle = GLES20.glGetAttribLocation(programId, "aTexCoord");
+        textureUniformHandle = GLES20.glGetAttribLocation(programId, "sTexture");
 
         // Load the .obj file
         try {
@@ -128,7 +152,21 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(tmpMatrix, 0, rotationMatrix, 0, scaleMatrix, 0);
         Matrix.multiplyMM(modelMatrix, 0, translateMatrix, 0, tmpMatrix, 0);
 
-        Log.i("APP", String.format("X: %f Y: %f Z: %f", objectPosition[0], objectPosition[1], objectPosition[2]));
+//        Log.i("APP", String.format("X: %f Y: %f Z: %f", objectPosition[0], objectPosition[1], objectPosition[2]));
+//        Log.i("APP", String.format("azimuth: %f pitch: %f roll: %f", azimuth, pitch, roll));
+
+        // Update view matrix based on camera position and rotation
+//        Matrix.setIdentityM(viewMatrix, 0);
+//        Matrix.rotateM(viewMatrix, 0, cameraRotation[0], 1, 0, 0);
+//        Matrix.rotateM(viewMatrix, 0, cameraRotation[1], 0, 1, 0);
+//        Matrix.rotateM(viewMatrix, 0, cameraRotation[2], 0, 0, 1);
+//        Matrix.translateM(viewMatrix, 0, -cameraPosition[0], -cameraPosition[1], -cameraPosition[2]);
+
+        Log.i("APP", Arrays.toString(viewMatrix));
+
+        // Combine with view matrix
+//        float[] combinedMatrix = new float[16];
+//        Matrix.multiplyMM(combinedMatrix, 0, viewMatrix, 0, cameraMatrix, 0);
 
         // Calculate the MVPMatrix
         Matrix.multiplyMM(vpMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
@@ -140,12 +178,16 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         // Enable vertex attribute arrays
         GLES20.glEnableVertexAttribArray(positionAttribute);
         GLES20.glEnableVertexAttribArray(normalAttribute);
+        GLES20.glEnableVertexAttribArray(texturePositionHandle);
 
         // Set the vertex attribute pointers
         GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, 0, vertexBuffer);
         GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, 0, normalBuffer);
+        GLES20.glVertexAttribPointer(texturePositionHandle, 2, GLES20.GL_FLOAT, false, 0, textureBuffer);
+
 
         // Draw the object
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, obj.getVertexCount());
 
         // Disable vertex arrays
@@ -205,19 +247,9 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         }
 
         // Divide by 3rd component to find out the real position
-        objectPosition[0] = (outPoint[0] / outPoint[3]) * 4f;
-        objectPosition[1] = (outPoint[1] / outPoint[3]) * 4f;
+        objectPosition[0] = (outPoint[0] / outPoint[3]) * randomDepth;
+        objectPosition[1] = (outPoint[1] / outPoint[3]) * randomDepth;
         objectPosition[2] = randomDepth;
-
-
-//        // Convert screen coordinates to OpenGL coordinates
-//        float glX = (2f * x / screenWidth - 1f);
-//        float glY = -1f * (2f * y / screenHeight - 1f);
-//
-//        // Set new position, keeping Z constant
-//        objectPosition[0] = glX;  // Scale by 5 to match the initial Z distance
-//        objectPosition[1] = glY;
-//        // Z remains constant at -5f
 
         requestRender();
     }
@@ -227,6 +259,17 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         this.screenHeight = height;
         this.aspectRatio = (float) width / height;
     }
+
+    public void updateCameraPosition(float x, float y, float z, float rotX, float rotY, float rotZ) {
+        cameraPosition[0] = x;
+        cameraPosition[1] = y;
+        cameraPosition[2] = z;
+        cameraRotation[0] = rotX;
+        cameraRotation[1] = rotY;
+        cameraRotation[2] = rotZ;
+        requestRender();
+    }
+
 
     public float getRotationAngle() { return rotationAngle; }
     public float getScale() { return scale; }
@@ -249,6 +292,12 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer();
         normalBuffer.put(obj.getNormals()).position(0);
+
+        textureBuffer = ByteBuffer.allocateDirect(obj.getTextures().length * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
+        textureBuffer.put(obj.getTextures()).position(0);
+
     }
 
     private int loadShader(int type, String shaderCode) {

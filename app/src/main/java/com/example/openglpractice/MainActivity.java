@@ -5,6 +5,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -31,7 +35,7 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
+public class MainActivity extends AppCompatActivity implements View.OnTouchListener, SensorEventListener {
     /* OPENGL VARIABLES */
     private GLSurfaceView glSurfaceView;
     private ObjRenderer renderer;
@@ -43,6 +47,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private CameraCaptureSession cameraCaptureSession;
     private CameraDevice cameraDevice;
     private Size optimalSize;
+
+    /* SENSOR FUSION VARIABLES */
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private Sensor gyroscope;
+    private float[] position = new float[3];
+    private float[] velocity = new float[3];
+    private float[] rotation = new float[3];
+    private long lastTimestamp;
 
     // Matrices for touch to 3D conversion
     private float[] projectionMatrix = new float[16];
@@ -57,6 +70,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         cameraPreview = findViewById(R.id.cameraPreview);
         glSurfaceView = findViewById(R.id.glSurfaceView);
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+
 
         // Make GLSurfaceView transparent
         glSurfaceView.setZOrderOnTop(true);
@@ -91,12 +108,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     protected void onPause() {
         super.onPause();
         glSurfaceView.onPause();
+        sensorManager.unregisterListener(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         glSurfaceView.onResume();
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME);
+        lastTimestamp = System.nanoTime();
     }
 
     // =============== Camera setup functions ===============
@@ -212,6 +233,43 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         return optimalSize;
     }
 
+    // =============== Sensor fusion functions ===============
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        long currentTimestamp = System.nanoTime();
+        float deltaTime = (currentTimestamp - lastTimestamp) / 1e9f;
+        lastTimestamp = currentTimestamp;
+
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            // Simple integration of acceleration to get position
+            for (int i = 0; i < 3; i++) {
+                velocity[i] += event.values[i] * deltaTime;
+                position[i] += velocity[i] * deltaTime;
+            }
+
+            // Apply a simple decay to velocity to prevent drift
+            for (int i = 0; i < 3; i++) {
+                velocity[i] *= 0.95f;
+            }
+        } else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            // Integrate angular velocity to get rotation
+            for (int i = 0; i < 3; i++) {
+                rotation[i] += event.values[i] * deltaTime;
+            }
+
+        }
+
+        // Update the camera in the renderer
+        renderer.updateCameraPosition(position[0], position[1], position[2],
+                                    rotation[0], rotation[1], rotation[2]);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+
 
     // =============== Button listener function ===============
     public void setButtonListeners() {
@@ -262,4 +320,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         });
 
     }
+
+
 }

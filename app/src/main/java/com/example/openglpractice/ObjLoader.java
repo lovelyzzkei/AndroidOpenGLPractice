@@ -12,6 +12,7 @@ public class ObjLoader {
         String line;
         List<Float> vertices = new ArrayList<>();
         List<Float> normals = new ArrayList<>();
+        List<Float> textures = new ArrayList<>();
         List<Integer> faces = new ArrayList<>();
 
         while ((line = reader.readLine()) != null) {
@@ -29,6 +30,10 @@ public class ObjLoader {
                     normals.add(Float.parseFloat(parts[2]));
                     normals.add(Float.parseFloat(parts[3]));
                     break;
+                case "vt":  // Texture
+                    textures.add(Float.parseFloat(parts[1]));
+                    textures.add(Float.parseFloat(parts[2]));
+                    break;
                 case "f":  // Face
                     for (int i = 1; i <= 3; i++) {
                         String[] vertexData = parts[i].split("/");
@@ -42,6 +47,7 @@ public class ObjLoader {
 
         float[] vertexArray = new float[faces.size() * 3];
         float[] normalArray = new float[faces.size() * 3];
+        float[] textureArray = new float[faces.size() * 2];
 
         for (int i = 0; i < faces.size(); i++) {
             int index = faces.get(i);
@@ -52,8 +58,11 @@ public class ObjLoader {
             normalArray[i * 3] = normals.get(index * 3);
             normalArray[i * 3 + 1] = normals.get(index * 3 + 1);
             normalArray[i * 3 + 2] = normals.get(index * 3 + 2);
+
+            textureArray[i * 2] = textures.get(index * 2);
+            textureArray[i * 2 + 1] = textures.get(index * 2 + 1);
         }
 
-        return new Obj3D(vertexArray, normalArray);
+        return new Obj3D(vertexArray, normalArray, textureArray);
     }
 }

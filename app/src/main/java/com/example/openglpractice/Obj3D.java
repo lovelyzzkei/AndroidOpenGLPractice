@@ -1,12 +1,12 @@
 package com.example.openglpractice;
 
 public class Obj3D {
-    private float[] vertices;
-    private float[] normals;
+    private float[] vertices, normals, textures;
 
-    public Obj3D(float[] vertices, float[] normals) {
+    public Obj3D(float[] vertices, float[] normals, float[] textures) {
         this.vertices = vertices;
         this.normals = normals;
+        this.textures = textures;
     }
 
     public float[] getVertices() {
@@ -15,6 +15,10 @@ public class Obj3D {
 
     public float[] getNormals() {
         return normals;
+    }
+
+    public float[] getTextures() {
+        return textures;
     }
 
     public int getVertexCount() {
