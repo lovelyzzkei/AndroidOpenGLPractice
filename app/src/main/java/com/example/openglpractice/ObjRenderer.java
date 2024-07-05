@@ -56,6 +56,8 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
     // Properties of camera
     private float[] cameraPosition = new float[3];
     private float[] cameraRotation = new float[3];
+    private float cameraX = 0f;
+    private float cameraY = 0f;
 
     private GLSurfaceView glSurfaceView;
     private int textureId;
@@ -108,7 +110,7 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         }
 
         // Set up view matrix
-        Matrix.setLookAtM(viewMatrix, 0, 0, 0, 0f, 0f, 0f, 3f, 0f,1.0f, 0.0f);
+//        Matrix.setLookAtM(viewMatrix, 0, 0, 0, 0f, 0f, 0f, 3f, 0f,1.0f, 0.0f);
     }
 
     @Override
@@ -162,11 +164,18 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
 //        Matrix.rotateM(viewMatrix, 0, cameraRotation[2], 0, 0, 1);
 //        Matrix.translateM(viewMatrix, 0, -cameraPosition[0], -cameraPosition[1], -cameraPosition[2]);
 
-        Log.i("APP", Arrays.toString(viewMatrix));
+//        Log.i("APP", Arrays.toString(viewMatrix));
 
         // Combine with view matrix
 //        float[] combinedMatrix = new float[16];
 //        Matrix.multiplyMM(combinedMatrix, 0, viewMatrix, 0, cameraMatrix, 0);
+
+        // View Matrix
+        Matrix.setLookAtM(viewMatrix, 0,
+                cameraX, cameraY, 0f,
+                cameraX, cameraY, 3f,
+                0f,1.0f, 0.0f);
+
 
         // Calculate the MVPMatrix
         Matrix.multiplyMM(vpMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
@@ -195,11 +204,15 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         GLES20.glDisableVertexAttribArray(normalAttribute);
     }
 
+    public void setCameraPosition(float x, float y) {
+
+    }
+
+
     public void setRotationAngle(float angle) {
         this.rotationAngle = angle;
         requestRender();
     }
-
     public void setScale(float scale) {
         this.scale = scale;
         requestRender();
@@ -222,7 +235,8 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         int oglTouchY = (int) (screenHeight - y);
 
         // Generate random number between 1 and 10
-        int randomDepth = (int) (Math.random() * 6) + 1;
+//        int randomDepth = (int) (Math.random() * 6) + 1;
+        int randomDepth = 4;
 
         // Transform the screen point to clip space in openGL (-1, 1)
         normalizedInPoint[0] = (float) ((2f * x / screenWidth - 1f));
@@ -267,6 +281,11 @@ public class ObjRenderer implements GLSurfaceView.Renderer {
         cameraRotation[0] = rotX;
         cameraRotation[1] = rotY;
         cameraRotation[2] = rotZ;
+        requestRender();
+    }
+    public void updateCameraPosition(float dx, float dy) {
+        cameraX += dx;
+        cameraY += dy;
         requestRender();
     }
 

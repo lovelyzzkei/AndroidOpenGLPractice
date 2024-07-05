@@ -39,6 +39,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     /* OPENGL VARIABLES */
     private GLSurfaceView glSurfaceView;
     private ObjRenderer renderer;
+    private float previousX, previousY;
+    private static final float TOUCH_SCALE_FACTOR = 0.01f;
+    private boolean isFirstMove = true;
 
     /* CAMERA VARIABLES */
     private TextureView cameraPreview;
@@ -57,11 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private float[] rotation = new float[3];
     private long lastTimestamp;
 
-    // Matrices for touch to 3D conversion
-    private float[] projectionMatrix = new float[16];
-    private float[] viewMatrix = new float[16];
-    private float[] invertedProjectionMatrix = new float[16];
-    private float[] invertedViewMatrix = new float[16];
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -90,18 +89,41 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         setButtonListeners();
 
         // Set camera
-        setupCamera();
+//        setupCamera();
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            float x = event.getX();
-            float y = event.getY();
-            renderer.setObjectPosition(x, y);
-            return true;
+        float x = event.getX();
+        float y = event.getY();
+
+
+
+        boolean ret = false;
+        switch (event.getAction()) {
+            // Touch down action
+            case MotionEvent.ACTION_DOWN:
+                renderer.setObjectPosition(x, y);
+                ret = true;
+                break;
+            // Moving action
+            case MotionEvent.ACTION_MOVE:
+//                renderer.setObjectPosition(x, y);
+
+                float dx = x - previousX;
+                float dy = y - previousY;
+                renderer.updateCameraPosition(-dx * TOUCH_SCALE_FACTOR, dy * TOUCH_SCALE_FACTOR);
+                Log.i("APP", String.format("X: %f Y: %f previousX: %f previousY: %f", x, y, previousX, previousY));
+                ret = true;
+                break;
+            case MotionEvent.ACTION_UP:
+                Log.i("APP", "ACTION_UP");
+                isFirstMove = true;
         }
-        return false;
+        Log.i("APP", "OUT");
+        previousX = x;
+        previousY = y;
+        return ret;
     }
 
     @Override
