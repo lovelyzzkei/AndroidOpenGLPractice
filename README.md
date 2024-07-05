@@ -11,5 +11,7 @@ This is the repository that contains simple example of using OpenGL in Android. 
 - Simple controller of scaling, rotation and translation
 - Camera preview
 
-<img src="./resources/demo.png" width="200" height="400"/>
-<img src="./resources/demo2.png" width="200" height="400"/>
+<p>
+  <img src="./resources/demo.png" width="200" height="400"/>
+  <img src="./resources/demo2.png" width="200" height="400"/>
+</p>
